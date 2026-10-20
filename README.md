@@ -9,7 +9,7 @@ et métabolomique (Data S3). CLR, validation croisée imbriquée, test de permut
 
 ## Structure
 - `processing/` — retraitement des lectures (fastp → Bowtie2 GRCh38 → Kraken2 → Bracken), reprenable, conçu pour 12 h de CPU Kaggle.
-- `src/run_ml.py` — modèles et évaluation.
+- `src/run_ml.py` — modèles et évaluation ; `src/extra_analyses.py` — courbe d'apprentissage, IC bootstrap 95 %, contrôle de la profondeur de séquençage.
 - `workflow/Snakefile` — étape ML en une commande. `docker/` — environnements.
 - `tests/` + `.github/workflows/ci.yml` — test sur données synthétiques.
 
