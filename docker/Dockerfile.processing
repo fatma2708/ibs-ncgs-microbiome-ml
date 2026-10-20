@@ -1,0 +1,9 @@
+# Étape retraitement des lectures brutes : fastp, Bowtie2, Kraken2, Bracken
+FROM mambaorg/micromamba:1.5.10
+RUN micromamba install -y -n base -c conda-forge -c bioconda \
+      fastp bowtie2 kraken2 bracken samtools sra-tools curl pigz && micromamba clean -a -y
+WORKDIR /work
+COPY processing/ processing/
+COPY data/phase1_samples.csv .
+# Bases de données (GRCh38, k2_standard_08gb) non incluses : voir README
+CMD ["bash", "processing/run.sh"]

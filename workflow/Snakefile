@@ -1,0 +1,13 @@
+# snakemake -c1 --config bracken=bracken_out s3=data/s3.xlsx
+BRACKEN = config.get("bracken", "bracken_out")
+S3      = config.get("s3", "data/s3.xlsx")
+REPEATS = config.get("repeats", 20)
+PERMS   = config.get("perms", 200)
+
+rule all:
+    input: "results/summary.json", "results/shap_taxonomy.csv", "results/shap_metabolomics.csv"
+
+rule ml:
+    input: bracken=BRACKEN, mapping="data/sample_id_map.csv", s3=S3
+    output: "results/summary.json", "results/shap_taxonomy.csv", "results/shap_metabolomics.csv", "results/auc_repeats.csv"
+    shell: "python src/run_ml.py --bracken {input.bracken} --map {input.mapping} --s3 {input.s3} --out results --repeats {REPEATS} --perms {PERMS}"
