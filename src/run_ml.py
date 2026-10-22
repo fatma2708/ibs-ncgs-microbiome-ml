@@ -60,6 +60,6 @@ for name, prep, X in (("taxonomy", prep_tax, T), ("metabolomics", prep_met, M)):
     A, _, cols = prep(X, X); sc = StandardScaler().fit(A); A = sc.transform(A)
     clf = LogisticRegression(C=0.01, max_iter=2000).fit(A, y)
     sv = shap.LinearExplainer(clf, A).shap_values(A)
-    imp = pd.DataFrame({"feature": cols, "mean_abs_shap": np.abs(sv).mean(0), "mean_shap_IBS": sv[y == 1].mean(0)}).sort_values("mean_abs_shap", ascending=False)
+    imp = pd.DataFrame({"feature": cols, "mean_abs_shap": np.abs(sv).mean(0), "coef_IBS": clf.coef_[0]}).sort_values("mean_abs_shap", ascending=False)
     imp.to_csv(f"{a.out}/shap_{name}.csv", index=False)
     print(name, "top10:", imp.feature.head(10).tolist())

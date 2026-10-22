@@ -5,7 +5,7 @@ REPEATS = config.get("repeats", 20)
 PERMS   = config.get("perms", 200)
 
 rule all:
-    input: "results/summary.json", "results/extra.json", "results/shap_taxonomy.csv", "results/shap_metabolomics.csv"
+    input: "figures/roc.png", "results/summary.json", "results/extra.json", "results/shap_taxonomy.csv", "results/shap_metabolomics.csv"
 
 rule ml:
     input: bracken=BRACKEN, mapping="data/sample_id_map.csv", s3=S3
@@ -16,3 +16,8 @@ rule extra:
     input: bracken=BRACKEN, mapping="data/sample_id_map.csv", s3=S3
     output: "results/extra.json", "results/learning_curve.csv"
     shell: "python src/extra_analyses.py --bracken {input.bracken} --map {input.mapping} --s3 {input.s3} --out results --repeats 10"
+
+rule figures:
+    input: "results/extra.json", "results/shap_taxonomy.csv", "results/learning_curve.csv"
+    output: "figures/roc.png", "figures/learning_curve.png", "figures/shap.png", "figures/pca.png"
+    shell: "python src/make_figures.py --bracken {BRACKEN} --map data/sample_id_map.csv --s3 {S3} --res results --out figures"

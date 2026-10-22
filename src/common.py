@@ -13,8 +13,9 @@ def prep_tax(Xtr, Xte, prev=0.2):
     return clr(Xtr), clr(Xte), Xtr.columns[keep]
 def prep_met(Xtr, Xte):
     return np.log1p(Xtr.values), np.log1p(Xte.values), Xtr.columns
-def fit_view(Xtr, ytr, Xte):
-    sc = StandardScaler().fit(Xtr); A, B = sc.transform(Xtr), sc.transform(Xte)
+def fit_model(Xtr, ytr):
+    """Standardise, choose C by inner 3-fold CV (training rows only), refit. Returns (scaler, classifier, C)."""
+    sc = StandardScaler().fit(Xtr); A = sc.transform(Xtr)
     best, bs = None, -1
     inner = StratifiedKFold(3, shuffle=True, random_state=1)
     for C in [1e-3, 1e-2, 1e-1, 1]:
@@ -24,8 +25,10 @@ def fit_view(Xtr, ytr, Xte):
             s.append(roc_auc_score(ytr[j], LogisticRegression(C=C, max_iter=2000).fit(A[i], ytr[i]).decision_function(A[j])))
         sc_ = np.mean(s) if s else 0
         if sc_ > bs: bs, best = sc_, C
-    clf = LogisticRegression(C=best, max_iter=2000).fit(A, ytr)
-    return clf.predict_proba(B)[:, 1]
+    return sc, LogisticRegression(C=best, max_iter=2000).fit(A, ytr), best
+def fit_view(Xtr, ytr, Xte):
+    sc, clf, _ = fit_model(Xtr, ytr)
+    return clf.predict_proba(sc.transform(Xte))[:, 1]
 
 def nested(y, T, M, seed, do_perm=False):
     cv = RepeatedStratifiedKFold(n_splits=4, n_repeats=1, random_state=seed)

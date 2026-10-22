@@ -42,5 +42,6 @@ if depth is not None:
     ld = np.log10(depth)
     conf = dict(auc_depth_alone=float(roc_auc_score(y, ld)), mannwhitney_p=float(mannwhitneyu(ld[y == 1], ld[y == 0]).pvalue),
                 spearman_depth_vs_tax_score=float(spearmanr(ld, P["tax"])[0]))
+pd.DataFrame({"y":y,"tax":P["tax"],"met":P["met"],"fusion":P["fusion"]}).to_csv(f"{a.out}/oof_predictions.csv",index=False)
 json.dump(dict(bootstrap_ci=ci, depth_confounding=conf), open(f"{a.out}/extra.json", "w"), indent=1)
 print(json.dumps(dict(bootstrap_ci=ci, depth_confounding=conf), indent=1))
