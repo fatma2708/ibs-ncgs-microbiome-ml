@@ -2,7 +2,6 @@
 
 <p align="center">
 A mini research project on public stool metagenomes, rebuilt from the raw reads on free compute.<br>
-<a href="https://github.com/fatma2708/ibs-ncgs-microbiome-ml/actions/workflows/ci.yml"><img src="https://github.com/fatma2708/ibs-ncgs-microbiome-ml/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <img src="https://img.shields.io/badge/samples-28-1f6feb" alt="28 samples">
 <img src="https://img.shields.io/badge/status-exploratory-orange" alt="exploratory">
 <img src="https://img.shields.io/badge/validation-ongoing-lightgrey" alt="validation ongoing">
