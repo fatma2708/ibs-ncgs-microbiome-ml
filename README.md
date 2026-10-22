@@ -1,53 +1,61 @@
-# IBS vs NCGS — taxonomie + métabolomique (réanalyse exploratoire)
+# IBS vs NCGS: gut taxonomy + metabolomics (exploratory reanalysis)
 
-Classification binaire IBS vs NCGS (sensibilité au gluten non cœliaque) à partir de données publiques
-(BioProject PRJNA981497, Dixit et al. 2026, *mSphere*) : profils taxonomiques (Kraken2/Bracken, retraités depuis les lectures brutes)
-et métabolomique (Data S3). CLR, validation croisée imbriquée, test de permutation, fusion tardive, SHAP.
+Binary classification of IBS vs NCGS (non-celiac gluten sensitivity) from public data
+(BioProject PRJNA981497, Dixit et al. 2026, *mSphere*): taxonomic profiles (Kraken2/Bracken, **reprocessed from the raw reads**)
+and LC-MS metabolomics (Data S3). CLR transform, nested cross-validation, permutation test, late fusion, SHAP.
 
-> **Limites :** n = 28 (14/14), une seule cohorte, pas de validation externe. Résultats exploratoires, pas un outil diagnostique.
-> L'appariement métabolomique ↔ échantillons de séquençage est **déduit** (k-ième `Mg_` trié = `IBS_k`/`NCGS_k`), non documenté par les auteurs.
+> **Limits:** n = 28 (14/14), a single cohort, no external validation. Exploratory results, not a diagnostic tool.
+> The metabolomics ↔ sequencing-sample mapping is **inferred** (k-th sorted `Mg_` = `IBS_k`/`NCGS_k`) and not documented by the authors.
+> It affects only the metabolomics and fusion views; the taxonomy result uses no mapping.
 
-## Résultats (n = 28 : 14 IBS, 14 NCGS)
-| | AUC (IC 95 %) | permutation p |
+## Results (n = 28: 14 IBS, 14 NCGS)
+| | AUC (95% CI) | permutation p |
 |---|---|---|
-| Taxonomie (régression logistique, CLR) | 0,80 (0,59–0,95) | 0,02 |
-| Métabolomique LC-MS | 0,40 (0,19–0,64) | 0,60 |
-| Fusion tardive | 0,79 (0,58–0,94) | 0,02 |
+| Taxonomy (logistic regression, CLR) | 0.80 (0.59–0.95) | 0.02 |
+| LC-MS metabolomics | 0.40 (0.19–0.64) | 0.60 |
+| Late fusion | 0.79 (0.58–0.94) | 0.02 |
 
-Robustesse : 0,79–0,81 sur 4 configurations (espèce/genre, seuils de prévalence) ; forêt aléatoire 0,77 ; diversité de Shannon seule 0,64 ; profondeur de séquençage seule 0,56.
-9 des 30 variables principales recoupent l'analyse DESeq2 publiée (≈3 attendues par hasard). Les Enterobacteriaceae en bloc ne diffèrent pas.
-**Contrôle de biais de sélection :** un rapport *Klebsiella*/*Rothia* choisi sur toutes les données donne AUC 0,95 (optimiste). Quand les deux taxons sont choisis *à l'intérieur* de chaque pli d'entraînement (`src/nested_ratio.py`), l'AUC tombe à 0,64 (espèce, p = 0,13) / 0,68 (genre, p = 0,08). *Klebsiella* est le taxon le plus souvent sélectionné comme enrichi dans l'IBS ; le couple n'est pas robuste. Hypothèse exploratoire retenue : *Klebsiella* plus élevé dans l'IBS, à tester sur une cohorte indépendante.
-Figures dans `figures/`, sorties brutes dans `results/`.
+Headline: **AUC ≈ 0.8** for taxonomy (see the audit section for exact definitions and a DeLong CI of 0.64–0.98).
+
+- **Robustness:** 0.79–0.81 across 4 pre-declared configurations (species/genus, prevalence thresholds); random forest 0.77; Shannon diversity alone 0.64; sequencing depth alone 0.56.
+- **Agreement with the paper:** 9 of the top 30 features overlap the published DESeq2 analysis (about 3 expected by chance). Enterobacteriaceae as a whole do not differ.
+- **Selection-bias control:** a *Klebsiella*/*Rothia* ratio chosen on all the data gives AUC 0.95 (optimistic). When the two taxa are chosen *inside* each training fold (`src/nested_ratio.py`), AUC drops to 0.64 (species, p = 0.13) / 0.68 (genus, p = 0.08). The pair is not robust.
+- **Differential abundance (FDR-corrected):** *Anaerostipes* is lower in IBS (q = 0.026, genus level), along with *Rothia*, *Wujia*, *Actinomyces* and *Granulicatella*.
+- **Hypothesis retained (exploratory):** *Klebsiella* (mostly *K. pneumoniae*) is higher in IBS than NCGS (about 9× at genus level, p = 0.013 uncorrected, not significant after FDR). To be tested in an independent cohort.
+
+Figures are in `figures/`, raw outputs in `results/`.
 
 ## Structure
-- `processing/` — retraitement des lectures (fastp → Bowtie2 GRCh38 → Kraken2 → Bracken), reprenable, conçu pour 12 h de CPU Kaggle.
-- `src/run_ml.py` — modèles et évaluation ; `src/extra_analyses.py` — courbe d'apprentissage, IC bootstrap 95 %, contrôle de la profondeur ; `src/make_figures.py` — figures ; `src/compare_deseq2.py` — recoupement avec les taxons différentiels publiés (Data S2) ; `src/compare_models.py` — LR vs forêt aléatoire vs référence (Shannon) vs signature publiée (biaisée) ; `src/nested_ratio.py` — évaluation honnête de la sélection de taxons ; `src/sensitivity.py` — 4 configurations pré-déclarées (espèce/genre, seuils de prévalence).
-- `workflow/Snakefile` — étape ML en une commande. `docker/` — environnements.
-- `tests/` + `.github/workflows/ci.yml` — test sur données synthétiques.
+- `processing/`: read reprocessing (fastp → Bowtie2 GRCh38 → Kraken2 → Bracken), resumable, designed for Kaggle's 12 h CPU limit.
+- `src/run_ml.py`: models and evaluation. `src/extra_analyses.py`: learning curve, 95% bootstrap CI, depth-confounding check. `src/make_figures.py`: figures. `src/compare_deseq2.py`: overlap with the published differential taxa (Data S2). `src/compare_models.py`: LR vs random forest vs Shannon baseline vs published signature (biased). `src/nested_ratio.py`: honest evaluation of taxon selection. `src/sensitivity.py`: 4 pre-declared configurations.
+- `src/audit_evaluation.py`: audit of the evaluation procedure. `src/freeze_model.py` and `src/validate_external.py`: frozen model and external-validation script. `src/fdr_differential.py` and `src/klebsiella_followup.py`: differential abundance and Klebsiella follow-up.
+- `workflow/Snakefile`: the ML step in one command. `docker/`: environments.
+- `tests/` + `.github/workflows/ci.yml`: test on synthetic data.
+- `DATASET.md`, `data/dataset_table.csv`: dataset documentation.
 
-## Utilisation
+## Usage
 ```bash
 docker build -f docker/Dockerfile -t ibs-ncgs-ml .
-# Data S3 : télécharger msphere.00856-25-s0003.xlsx depuis l'article, le placer dans data/s3.xlsx
+# Data S3: download msphere.00856-25-s0003.xlsx from the paper and place it in data/s3.xlsx
 docker run --rm -v $PWD:/app -w /app --entrypoint snakemake ibs-ncgs-ml -c1 --snakefile workflow/Snakefile
-# test rapide : docker run --rm --entrypoint bash ibs-ncgs-ml tests/test_pipeline.sh
+# quick test: docker run --rm --entrypoint bash ibs-ncgs-ml tests/test_pipeline.sh
 ```
-Les profils `bracken_out/*.bracken` s'obtiennent avec `processing/` (bases Kraken2 `k2_standard_08gb_20240605` et GRCh38 à fournir).
+The `bracken_out/*.bracken` profiles are produced with `processing/` (the Kraken2 database `k2_standard_08gb_20240605` and GRCh38 must be provided).
 
-## Audit de l'évaluation (`src/audit_evaluation.py`, `results/audit_evaluation.json`)
-- **Pas de fuite détectée** : filtre de prévalence, standardisation et choix de C appris sur les lignes d'entraînement seulement ; CLR par échantillon (test de garde inclus).
-- **Définition de l'AUC** : moyenne par répétition = 0,79 (SD 0,03) ; AUC des prédictions moyennées sur 20 répétitions = 0,81. À citer comme « AUC ≈ 0,8 ».
-- **IC 95 %** : DeLong 0,64–0,98 ; bootstrap 0,61–0,96. Les deux traitent les scores hors-pli comme fixes, donc l'incertitude réelle est un peu plus grande.
-- **Permutations** : nulle centrée sur 0,49 (SD 0,14, donc bruit important à n = 28). p = 0,015 (une exécution) et 0,030 (moyenne de 5 répétitions, estimand apparié).
-- **Calibration du test** : sur 40 jeux à étiquettes mélangées, p ≤ 0,10 dans 10 % des cas et p ≤ 0,05 dans 2,5 % (p moyen 0,48) : pas de faux positifs en excès.
+## Evaluation audit (`src/audit_evaluation.py`, `results/audit_evaluation.json`)
+- **No leakage detected:** the prevalence filter, standardisation and choice of C are learned on training rows only; CLR is per sample (a guard test is included).
+- **AUC definition:** mean per repeat = 0.79 (SD 0.03); AUC of predictions averaged over 20 repeats = 0.81. Quote it as "AUC ≈ 0.8".
+- **95% CI:** DeLong 0.64–0.98; bootstrap 0.61–0.96. Both treat the out-of-fold scores as fixed, so the true uncertainty is somewhat larger.
+- **Permutations:** the null is centred on 0.49 (SD 0.14, so noise is substantial at n = 28). p = 0.015 (single run) and 0.030 (mean of 5 repeats, matched estimand).
+- **Test calibration:** on 40 label-shuffled datasets, p ≤ 0.10 in 10% of cases and p ≤ 0.05 in 2.5% (mean p 0.48): no excess false positives.
 
-## Validation externe
-Aucune cohorte publique indépendante IBS vs NCGS avec métagénomes shotgun n'a été trouvée (voir `DATASET.md`). Le modèle gelé (`src/freeze_model.py`, `models/frozen_model_v1.joblib`) et le script `src/validate_external.py` (règles de décision prédéfinies) sont prêts pour une cohorte future. Appliquer le modèle gelé aux données de découverte donne AUC = 1,0 : c'est un test de mécanique, pas une validation.
+## External validation
+No independent public IBS vs NCGS cohort with shotgun metagenomes was found (see `DATASET.md`). The frozen model (`src/freeze_model.py`, `models/frozen_model_v1.joblib`) and the `src/validate_external.py` script (pre-specified decision rules) are ready for a future cohort. Applying the frozen model to the discovery data gives AUC = 1.0: that is a mechanics check, not a validation.
 
-## Données
-Voir [`DATASET.md`](DATASET.md) et `data/dataset_table.csv` (42 runs dans le BioProject, 28 utilisés = tous les IBS et NCGS ; NCGS_PG exclu car mêmes patients après régime).
+## Data
+See [`DATASET.md`](DATASET.md) and `data/dataset_table.csv` (42 runs in the BioProject, 28 used = all IBS and NCGS; NCGS_PG excluded because it is the same patients after the diet).
 
-## Suivi de l'hypothèse Klebsiella (`src/klebsiella_followup.py`, exploratoire, p non corrigés)
-- Le signal vient surtout de *K. pneumoniae* (médiane 0,66 % vs 0,04 %, p = 0,010), avec le même sens pour *K. quasipneumoniae* et *K. variicola*. *K. oxytoca*, *grimontii* et *michiganensis* ne diffèrent pas.
-- Pas de différence pour *Escherichia*, *Enterobacter*, *Citrobacter* : ce n'est pas une prolifération générale d'entérobactéries.
-- Un panel plus large de producteurs de butyrate ne diffère pas (p = 0,21) : seul *Anaerostipes* ressort. La corrélation *Anaerostipes*–*Klebsiella* est négative globalement (ρ = −0,36) mais pas au sein des groupes : pas de preuve d'un lien direct.
+## Klebsiella follow-up (`src/klebsiella_followup.py`, exploratory, uncorrected p-values)
+- The signal comes mostly from *K. pneumoniae* (median 0.66% vs 0.04%, p = 0.010), with the same direction for *K. quasipneumoniae* and *K. variicola*. *K. oxytoca*, *grimontii* and *michiganensis* do not differ.
+- No difference for *Escherichia*, *Enterobacter* or *Citrobacter*: this is not a general bloom of Enterobacteriaceae.
+- A wider panel of butyrate producers does not differ (p = 0.21): only *Anaerostipes* stands out. The *Anaerostipes*–*Klebsiella* correlation is negative overall (rho = -0.36) but not within groups: no evidence of a direct link.
