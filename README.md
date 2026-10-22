@@ -46,3 +46,8 @@ Aucune cohorte publique indépendante IBS vs NCGS avec métagénomes shotgun n'a
 
 ## Données
 Voir [`DATASET.md`](DATASET.md) et `data/dataset_table.csv` (42 runs dans le BioProject, 28 utilisés = tous les IBS et NCGS ; NCGS_PG exclu car mêmes patients après régime).
+
+## Suivi de l'hypothèse Klebsiella (`src/klebsiella_followup.py`, exploratoire, p non corrigés)
+- Le signal vient surtout de *K. pneumoniae* (médiane 0,66 % vs 0,04 %, p = 0,010), avec le même sens pour *K. quasipneumoniae* et *K. variicola*. *K. oxytoca*, *grimontii* et *michiganensis* ne diffèrent pas.
+- Pas de différence pour *Escherichia*, *Enterobacter*, *Citrobacter* : ce n'est pas une prolifération générale d'entérobactéries.
+- Un panel plus large de producteurs de butyrate ne diffère pas (p = 0,21) : seul *Anaerostipes* ressort. La corrélation *Anaerostipes*–*Klebsiella* est négative globalement (ρ = −0,36) mais pas au sein des groupes : pas de preuve d'un lien direct.
