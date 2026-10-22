@@ -4,4 +4,5 @@ scipy==1.15.3
 scikit-learn==1.7.2
 shap==0.48.0
 openpyxl==3.1.5
+matplotlib==3.10.7
 snakemake==9.11.4
